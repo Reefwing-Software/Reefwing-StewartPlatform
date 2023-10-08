@@ -7,15 +7,17 @@
 #define PRINTLN(x)  Serial.println(x)
 #define LOG(str, var)  Log:: println(str, var);
 
-//  Number of Servos on Stewart Platform
+//  Number of Servos on Stewart Platform & Servo Specs
 #define SERVO_NUM 6
+#define SERVO_MIN 1000
+#define SERVO_MAX 2000
 
 Servo servo[SERVO_NUM];
 
 uint8_t ss = 0;   // Selected Servo
 uint8_t servoPin[] = {2, 3, 4, 5, 6, 7};
 uint16_t pw = 1500; //  Current Home Pulse Width
-uint16_t hPW[] = {1500, 1500, 1500, 1500, 1500, 1500};  //  Default Home Pulse Widths in us
+uint16_t hPW[] = {1330, 1643, 1285, 1597, 1352, 1621};  //  Default Home Pulse Widths in us
 
 const char header[] = "reefwing";
 
@@ -82,6 +84,7 @@ void displayInstructions() {
   PRINTLN(F("                             ::Platform Calibration::"));
   PRINTLN(F("Commands - 0: Servo 0, 1: Servo 1, 2: Servo 2, 3: Servo 3, 4: Servo 4, 5: Servo 5"));
   PRINTLN(F("         - h: Home Position, <: Decrease PW, >: Increase PW, p: Print Home PW"));
+  PRINTLN(F("         - z: 500 us PW, m: 2500 us PW - nominal min and max values"));
   PRINTLN(F("         - a: All Servos Home, s: Save Home PW for current servo, i: Instructions"));
   PRINTLN(F("         - u: Upload saved values to EEPROM, d: Download values from EEPROM"));
   PRINTLN(F("==================================================================================\n"));
@@ -181,13 +184,22 @@ void loop() {
     case 'h':
       pw = hPW[ss];
       servo[ss].writeMicroseconds(pw);
+      Log::println("Servo ", ss, " moved to Home. Pulse Width: ", pw);
+    break;
+    case ',':
+      pw -= 100;
+      servo[ss].writeMicroseconds(pw);
     break;
     case '<':
-      pw -= 10;
+      pw -= 20;
+      servo[ss].writeMicroseconds(pw);
+    break;
+    case '.':
+      pw += 100;
       servo[ss].writeMicroseconds(pw);
     break;
     case '>':
-      pw += 10;
+      pw += 20;
       servo[ss].writeMicroseconds(pw);
     break;
     case 'p':
@@ -225,7 +237,15 @@ void loop() {
         PRINTLN(F("Header not found in EEPROM, unable to download Servo Home values.\n"));
       }
     break;
+    case 'z':
+      servo[ss].writeMicroseconds(SERVO_MIN);
+      Log::println("Servo ", ss, " Minimum Pulse Width: ", SERVO_MIN);
+    break;
+    case 'm':
+      servo[ss].writeMicroseconds(SERVO_MAX);
+      Log::println("Servo ", ss, " Maximum Pulse Width: ", SERVO_MAX);
+    break;
   }
 
-  delay(50);
+  //delay(2000);
 }
